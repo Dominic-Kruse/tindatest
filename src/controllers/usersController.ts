@@ -58,10 +58,12 @@ export async function registerUser(req: Request, res: Response) {
       await db.insert(buyers).values({ user_id: newUser!.user_id });
     }
 
-    await db.insert(shopping_carts).values({
-      buyer_id: newUser!.user_id,
-    });
-    console.log(`✅ Created shopping cart for new buyer: ${newUser!.user_id}`);
+    if (role === "buyer") {
+      await db.insert(shopping_carts).values({
+        buyer_id: newUser!.user_id,
+      });
+      console.log(`✅ Created shopping cart for new buyer: ${newUser!.user_id}`);
+    }
 
     const token = createToken({ id: newUser?.user_id, email, role });
 
