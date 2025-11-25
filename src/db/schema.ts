@@ -11,7 +11,13 @@ import {
   decimal,
   index,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm'
+
+
+
+
+
+
+import { sql,relations } from 'drizzle-orm'
 /**
  * Enums
  */
@@ -192,16 +198,7 @@ export const images = pgTable('images', {
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
-/**
- * Sessions & revoked tokens
- */
-export const sessions = pgTable('sessions', {
-  session_id: serial('session_id').primaryKey(),
-  user_id: integer('user_id').references(() => users.user_id, { onDelete: 'cascade' }).notNull(),
-  session_token: varchar('session_token', { length: 255 }).notNull(),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  expires_at: timestamp('expires_at').notNull(),
-});
+// revoked tokens 
 
 export const revoked_tokens = pgTable('revoked_tokens', {
   token_id: serial('token_id').primaryKey(),
@@ -297,3 +294,58 @@ export const sales = pgTable(
     stallDateIndex: index('sales_stall_date_idx').on(table.stall_id, table.created_at),
   })
 );
+
+
+// relations 
+
+// Users relations
+export const usersRelations = relations(users, ({ one }) => ({
+  vendor: one(vendors),
+  buyer: one(buyers),
+}));
+
+// Vendors relations
+export const vendorsRelations = relations(vendors, ({ one, many }) => ({
+  user: one(users, { fields: [vendors.user_id], references: [users.user_id] }),
+  stalls: many(stalls),
+  conversations: many(conversations),
+}));
+
+// Buyers relations
+export const buyersRelations = relations(buyers, ({ one, many }) => ({
+  user: one(users, { fields: [buyers.user_id], references: [users.user_id] }),
+  shoppingCart: one(shopping_carts),
+  conversations: many(conversations),
+  orders: many(orders),
+  reviews: many(reviews),
+  payments: many(payments),
+}));
+
+// Shopping carts relations (ONLY for buyers)
+export const shoppingCartsRelations = relations(shopping_carts, ({ one, many }) => ({
+  buyer: one(buyers, { 
+    fields: [shopping_carts.buyer_id], 
+    references: [buyers.user_id] 
+  }),
+  lineItems: many(line_items),
+}));
+
+// Stalls relations (vendors can have multiple stalls)
+export const stallsRelations = relations(stalls, ({ one, many }) => ({
+  vendor: one(vendors, { 
+    fields: [stalls.user_id], 
+    references: [vendors.user_id] 
+  }),
+  stallItems: many(stall_items),
+  conversations: many(conversations),
+  orders: many(orders),
+  reviews: many(reviews),
+  sales: many(sales),
+}));
+
+export const lineItemsRelations = relations(line_items, ({ one }) => ({
+  product: one(stall_items, {
+    fields: [line_items.item_id],
+    references: [stall_items.item_id],
+  }),
+}));

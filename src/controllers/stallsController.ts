@@ -292,3 +292,4 @@ export async function getStallsByVendor(req: Request, res: Response) {
   }
 }
 
+

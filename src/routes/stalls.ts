@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import { getStalls, createStall, updateStall, getStallById, getStallsByVendor } from '../controllers/stallsController';
 import { verifyToken } from '../middleware/authMiddleware';
-
+import { createListing } from '../controllers/productsController';
 const router = express.Router();
 
 // FIXED Multer configuration - preserves file extensions
@@ -30,6 +30,7 @@ router.get('/', getStalls);
 router.get('/:id', getStallById);
 
 
+router.post("/items", verifyToken, createListing)
 
 router.get('/vendor/:vendorId', verifyToken ,getStallsByVendor);
 router.post('/', verifyToken, upload.fields([

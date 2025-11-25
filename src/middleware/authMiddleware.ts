@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 // Define the user structure
 interface JwtUser {
   id: number
+  full_name: string
   email: string
   role: string
 }
