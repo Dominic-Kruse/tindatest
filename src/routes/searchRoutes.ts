@@ -1,21 +1,21 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { stalls, stall_items, images } from '../db/schema';
-import { sql, or, eq, and } from 'drizzle-orm';
+import { stalls, images } from '../db/schema';
+import { sql, or, and } from 'drizzle-orm';
 
 const router = Router();
 
-router.get('/search/suggest', async (req, res) => {
+router.get('/suggest', async (req, res) => {
   try {
-    const query = req.query.q as string;
-    
+    const query = (req.query.q as string)?.trim();
+
     if (!query || query.length < 2) {
       return res.json({ results: [], query, count: 0 });
     }
 
-    const searchTerm = `%${query.toLowerCase()}%`;
+    const searchTerm = `%${query}%`;
 
-    // Search stalls
+    // Safe case-insensitive search using parameterized query
     const stallResults = await db
       .select({
         stall_id: stalls.stall_id,
@@ -28,14 +28,14 @@ router.get('/search/suggest', async (req, res) => {
       .leftJoin(
         images,
         and(
-          eq(images.stall_id, stalls.stall_id),
-          eq(images.image_type, 'profile')
+          sql`${images.stall_id} = ${stalls.stall_id}`,
+          sql`${images.image_type} = 'profile'`
         )
       )
       .where(
         or(
-          sql`LOWER(${stalls.stall_name}) LIKE ${searchTerm}`,
-          sql`LOWER(${stalls.category}) LIKE ${searchTerm}`
+          sql`LOWER(${stalls.stall_name}) LIKE LOWER(${searchTerm})`,
+          sql`LOWER(${stalls.category}) LIKE LOWER(${searchTerm})`
         )
       )
       .limit(10);
