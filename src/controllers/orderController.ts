@@ -61,3 +61,25 @@ export const getVendorOrders = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const updateOrderStatus = async (req: Request, res: Response) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+
+  try {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ status: status, updated_at: new Date() })
+      .where(eq(orders.order_id, Number(orderId)))
+      .returning();
+
+    if (!updatedOrder) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
