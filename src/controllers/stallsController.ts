@@ -235,8 +235,8 @@ export const getStallById = async (req: Request, res: Response) => {
         stall_address: stalls.stall_address,
         vendor_contact: vendors.vendor_contact,
         category: stalls.category,
-        banner_url: bannerImages.image_url,
-        icon_url: iconImages.image_url,
+        banner_photo: bannerImages.image_url,
+        stall_icon: iconImages.image_url,
       })
       .from(stalls)
       .leftJoin(vendors, eq(stalls.user_id, vendors.user_id))
