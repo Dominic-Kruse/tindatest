@@ -8,6 +8,7 @@ import authRouter from './routes/authRoutes'  // ✅ add this
 import stallsRouter from './routes/stalls';
 import productsRouter from './routes/productsRoutes';
 import cartRoutes from './routes/cartRoutes'
+import orderRoutes from './routes/orderRoutes'
 
 const app = express()
 const port = process.env.PORT || 3001
@@ -22,6 +23,7 @@ app.use('/api/stalls', stallsRouter);
 app.use('/api/products', productsRouter);
 app.use('/uploads', express.static('uploads'));
 app.use("/api/cart", cartRoutes);
+app.use('/api/orders', orderRoutes);
 
 // (Optional) keep your test routes for fetching tables
 const tables = [
