@@ -97,6 +97,8 @@ export const buyers = pgTable('buyers', {
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const stallStatusEnum = pgEnum('stall_status', ['active', 'inactive', 'pending']);
+
 /**
  * Stalls
  */
@@ -113,6 +115,7 @@ export const stalls = pgTable('stalls', {
   stall_state: varchar('stall_state', { length: 100 }),
   stall_zip_code: varchar('stall_zip_code', { length: 20 }),
   stall_country: varchar('stall_country', { length: 100 }).default('Philippines'),
+  status: stallStatusEnum('status').default('pending').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

@@ -41,6 +41,7 @@ export async function getStalls(req: Request, res: Response) {
           eq(iconImages.image_type, "icon")
         )
       )
+      .where(eq(stalls.status, "active"))
       .groupBy(
         stalls.stall_id,
         vendors.business_name,
@@ -154,23 +155,37 @@ export const updateStall = async (req: Request, res: Response) => {
       stall_state,
       stall_zipcode,
       vendor_contact,
+      status, // Added status
     } = req.body;
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
     const bannerPath = files?.banner_image?.[0]?.filename || null;
     const iconPath = files?.icon_image?.[0]?.filename || null;
 
+    const updateData: {
+      stall_name?: string;
+      category?: string;
+      stall_description?: string;
+      stall_address?: string;
+      stall_city?: string;
+      stall_state?: string;
+      stall_zip_code?: string;
+      status?: "active" | "inactive" | "pending";
+    } = {};
+
+    if (stall_name) updateData.stall_name = stall_name;
+    if (category) updateData.category = category;
+    if (stall_description) updateData.stall_description = stall_description;
+    if (stall_address) updateData.stall_address = stall_address;
+    if (stall_city) updateData.stall_city = stall_city;
+    if (stall_state) updateData.stall_state = stall_state;
+    if (stall_zipcode) updateData.stall_zip_code = stall_zipcode;
+    if (status) updateData.status = status;
+
+
     const [updatedStall] = await db
       .update(stalls)
-      .set({
-        stall_name,
-        category,
-        stall_description,
-        stall_address,
-        stall_city,
-        stall_state,
-        stall_zip_code: stall_zipcode,
-      })
+      .set(updateData)
       .where(eq(stalls.stall_id, Number(id)))
       .returning();
 
@@ -235,6 +250,7 @@ export const getStallById = async (req: Request, res: Response) => {
         stall_address: stalls.stall_address,
         vendor_contact: vendors.vendor_contact,
         category: stalls.category,
+        status: stalls.status,
         banner_photo: bannerImages.image_url,
         stall_icon: iconImages.image_url,
       })
