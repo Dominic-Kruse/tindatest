@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../db';
 import { orders, stalls, line_items, stall_items } from '../db/schema';
-import { and, eq, desc, asc, inArray, count } from 'drizzle-orm';
+import { and, eq, desc, asc, inArray, count, gte } from 'drizzle-orm';
 
 export const getVendorOrders = async (req: Request, res: Response) => {
   const { stallId, sortBy, limit = '10', page = '1', category } = req.query;
@@ -58,6 +58,46 @@ export const getVendorOrders = async (req: Request, res: Response) => {
     res.status(200).json({ orders: filteredOrders, totalCount });
   } catch (error) {
     console.error('Error fetching vendor orders:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getVendorOrderStats = async (req: Request, res: Response) => {
+  const { stallId } = req.query;
+
+  if (!stallId) {
+    return res.status(400).json({ message: 'Stall ID is required' });
+  }
+
+  try {
+    // Calculate total orders for the stall
+    const totalOrdersResult = await db
+      .select({ count: count() })
+      .from(orders)
+      .where(eq(orders.stall_id, Number(stallId)));
+
+    const totalOrders = totalOrdersResult[0]?.count ? Number(totalOrdersResult[0].count) : 0;
+
+    // Calculate orders this week
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday of current week
+    const startOfWeek = new Date(now.setDate(diff));
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weeklyOrdersResult = await db
+      .select({ count: count() })
+      .from(orders)
+      .where(and(
+        eq(orders.stall_id, Number(stallId)),
+        gte(orders.created_at, startOfWeek)
+      ));
+
+    const weeklyOrders = weeklyOrdersResult[0]?.count ? Number(weeklyOrdersResult[0].count) : 0;
+
+    res.status(200).json({ totalOrders, weeklyOrders });
+  } catch (error) {
+    console.error('Error fetching vendor order stats:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
