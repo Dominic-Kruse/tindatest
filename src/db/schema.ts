@@ -242,10 +242,9 @@ export const line_items = pgTable('line_items', {
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
+
 /**
  * Orders
- * - orderStatusEnum
- * - index for buyer+stall lookups
  */
 export const orders = pgTable(
   'orders',
@@ -263,7 +262,6 @@ export const orders = pgTable(
     statusIndex: index('orders_status_idx').on(table.status),
   })
 );
-
 /**
  * Payments
  */
@@ -319,7 +317,7 @@ export const buyersRelations = relations(buyers, ({ one, many }) => ({
   user: one(users, { fields: [buyers.user_id], references: [users.user_id] }),
   shoppingCart: one(shopping_carts),
   conversations: many(conversations),
-  orders: many(orders),
+  orders: many(orders), // This should reference the orders table
   reviews: many(reviews),
   payments: many(payments),
 }));
@@ -341,7 +339,7 @@ export const stallsRelations = relations(stalls, ({ one, many }) => ({
   }),
   stallItems: many(stall_items),
   conversations: many(conversations),
-  orders: many(orders),
+  orders: many(orders), // This should reference the orders table
   reviews: many(reviews),
   sales: many(sales),
 }));
@@ -351,4 +349,17 @@ export const lineItemsRelations = relations(line_items, ({ one }) => ({
     fields: [line_items.item_id],
     references: [stall_items.item_id],
   }),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  buyer: one(buyers, {
+    fields: [orders.buyer_id],
+    references: [buyers.user_id],
+  }),
+  stall: one(stalls, {
+    fields: [orders.stall_id],
+    references: [stalls.stall_id],
+  }),
+  lineItems: many(line_items),
+  payments: many(payments),
 }));
