@@ -2,7 +2,8 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { getStalls, createStall, updateStall, getStallById, getStallsByVendor } from '../controllers/stallsController';
-
+import { verifyToken } from '../middleware/authMiddleware';
+import { createListing } from '../controllers/productsController';
 const router = express.Router();
 
 // FIXED Multer configuration - preserves file extensions
@@ -26,9 +27,13 @@ const upload = multer({
 
 // Routes remain exactly the same - no changes needed!
 router.get('/', getStalls);
-router.get('/vendor/:vendorId', getStallsByVendor);
 router.get('/:id', getStallById);
-router.post('/', upload.fields([
+
+
+router.post("/items", verifyToken, createListing)
+
+router.get('/vendor/:vendorId', verifyToken ,getStallsByVendor);
+router.post('/', verifyToken, upload.fields([
   { name: 'banner_image', maxCount: 1 },
   { name: 'icon_image', maxCount: 1 },
 ]), createStall);

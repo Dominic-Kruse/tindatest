@@ -11,7 +11,13 @@ import {
   decimal,
   index,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm'
+
+
+
+
+
+
+import { sql,relations } from 'drizzle-orm'
 /**
  * Enums
  */
@@ -91,6 +97,8 @@ export const buyers = pgTable('buyers', {
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const stallStatusEnum = pgEnum('stall_status', ['active', 'inactive', 'pending']);
+
 /**
  * Stalls
  */
@@ -107,6 +115,7 @@ export const stalls = pgTable('stalls', {
   stall_state: varchar('stall_state', { length: 100 }),
   stall_zip_code: varchar('stall_zip_code', { length: 20 }),
   stall_country: varchar('stall_country', { length: 100 }).default('Philippines'),
+  status: stallStatusEnum('status').default('pending').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -114,8 +123,7 @@ export const stalls = pgTable('stalls', {
 /**
  * Stall items (products)
  * - indexed on stall_id and price for common listing/filtering
- */
-export const stall_items = pgTable(
+ */export const stall_items = pgTable(
   'stall_items',
   {
     item_id: serial('item_id').primaryKey(),
@@ -125,12 +133,14 @@ export const stall_items = pgTable(
     price: decimal('price', { precision: 12, scale: 2 }).notNull(),
     item_stocks: integer('item_stocks').default(0),
     in_stock: boolean('in_stock').default(false),
+    category: varchar('category', { length: 100 }).notNull().default('Other'), // NEW: Added category field
     created_at: timestamp('created_at').defaultNow().notNull(),
     updated_at: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => ({
     stallIdIndex: index('stall_items_stall_id_idx').on(table.stall_id),
     priceIndex: index('stall_items_price_idx').on(table.price),
+    categoryIndex: index('stall_items_category_idx').on(table.category), // NEW: Index for category filtering
   })
 );
 
@@ -192,16 +202,7 @@ export const images = pgTable('images', {
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
-/**
- * Sessions & revoked tokens
- */
-export const sessions = pgTable('sessions', {
-  session_id: serial('session_id').primaryKey(),
-  user_id: integer('user_id').references(() => users.user_id, { onDelete: 'cascade' }).notNull(),
-  session_token: varchar('session_token', { length: 255 }).notNull(),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  expires_at: timestamp('expires_at').notNull(),
-});
+// revoked tokens 
 
 export const revoked_tokens = pgTable('revoked_tokens', {
   token_id: serial('token_id').primaryKey(),
@@ -242,10 +243,9 @@ export const line_items = pgTable('line_items', {
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
+
 /**
  * Orders
- * - orderStatusEnum
- * - index for buyer+stall lookups
  */
 export const orders = pgTable(
   'orders',
@@ -263,7 +263,6 @@ export const orders = pgTable(
     statusIndex: index('orders_status_idx').on(table.status),
   })
 );
-
 /**
  * Payments
  */
@@ -297,3 +296,71 @@ export const sales = pgTable(
     stallDateIndex: index('sales_stall_date_idx').on(table.stall_id, table.created_at),
   })
 );
+
+
+// relations 
+
+// Users relations
+export const usersRelations = relations(users, ({ one }) => ({
+  vendor: one(vendors),
+  buyer: one(buyers),
+}));
+
+// Vendors relations
+export const vendorsRelations = relations(vendors, ({ one, many }) => ({
+  user: one(users, { fields: [vendors.user_id], references: [users.user_id] }),
+  stalls: many(stalls),
+  conversations: many(conversations),
+}));
+
+// Buyers relations
+export const buyersRelations = relations(buyers, ({ one, many }) => ({
+  user: one(users, { fields: [buyers.user_id], references: [users.user_id] }),
+  shoppingCart: one(shopping_carts),
+  conversations: many(conversations),
+  orders: many(orders), // This should reference the orders table
+  reviews: many(reviews),
+  payments: many(payments),
+}));
+
+// Shopping carts relations (ONLY for buyers)
+export const shoppingCartsRelations = relations(shopping_carts, ({ one, many }) => ({
+  buyer: one(buyers, { 
+    fields: [shopping_carts.buyer_id], 
+    references: [buyers.user_id] 
+  }),
+  lineItems: many(line_items),
+}));
+
+// Stalls relations (vendors can have multiple stalls)
+export const stallsRelations = relations(stalls, ({ one, many }) => ({
+  vendor: one(vendors, { 
+    fields: [stalls.user_id], 
+    references: [vendors.user_id] 
+  }),
+  stallItems: many(stall_items),
+  conversations: many(conversations),
+  orders: many(orders), // This should reference the orders table
+  reviews: many(reviews),
+  sales: many(sales),
+}));
+
+export const lineItemsRelations = relations(line_items, ({ one }) => ({
+  product: one(stall_items, {
+    fields: [line_items.item_id],
+    references: [stall_items.item_id],
+  }),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  buyer: one(buyers, {
+    fields: [orders.buyer_id],
+    references: [buyers.user_id],
+  }),
+  stall: one(stalls, {
+    fields: [orders.stall_id],
+    references: [stalls.stall_id],
+  }),
+  lineItems: many(line_items),
+  payments: many(payments),
+}));
