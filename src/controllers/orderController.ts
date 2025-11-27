@@ -26,14 +26,14 @@ export const getVendorOrders = async (req: Request, res: Response) => {
   let orderBy;
   switch (sortBy) {
     case 'oldest':
-      orderBy = asc(orders.created_at);
+      orderBy = [asc(orders.created_at)];
       break;
     case 'date-updated':
-      orderBy = desc(orders.updated_at);
+      orderBy = [desc(orders.updated_at), desc(orders.created_at)];
       break;
     case 'newest':
     default:
-      orderBy = desc(orders.created_at);
+      orderBy = [desc(orders.created_at)];
       break;
   }
 
@@ -43,7 +43,7 @@ export const getVendorOrders = async (req: Request, res: Response) => {
       .from(orders)
       .leftJoin(stalls, eq(orders.stall_id, stalls.stall_id))
       .where(and(...whereClauses))
-      .orderBy(orderBy)
+      .orderBy(...orderBy)
       .limit(limitNumber)
       .offset(offset);
 
