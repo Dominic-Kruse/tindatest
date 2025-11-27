@@ -10,7 +10,7 @@ import productsRouter from './routes/productsRoutes';
 import cartRoutes from './routes/cartRoutes'
 import orderRoutes from './routes/orderRoutes'
 import searchRouter from "./routes/searchRoutes";
-import checkoutRoutes from './routes/checkoutRoutes' // Remove unused import
+import checkoutRoutes from './routes/checkoutRoutes'
 
 const app = express()
 const port = process.env.PORT || 3001
@@ -26,7 +26,7 @@ app.use('/api/products', productsRouter);
 app.use('/uploads', express.static('uploads'));
 app.use("/api/cart", cartRoutes);
 app.use('/api/orders', orderRoutes);
-app.use("/api/search", searchRouter); // Changed to /api/search for consistency
+app.use("/api/search", searchRouter);
 app.use('/api/checkout', checkoutRoutes)
 
 // (Optional) keep your test routes for fetching tables
@@ -61,6 +61,5 @@ app.get('/api/debug/routes', (req, res) => {
   res.json(routes)
 })
 
-app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`)
-})
+// Vercel-compatible export (REMOVE app.listen)
+export default app
