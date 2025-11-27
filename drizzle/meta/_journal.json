@@ -29,6 +29,13 @@
       "when": 1764136885998,
       "tag": "0003_good_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1764257838709,
+      "tag": "0004_wakeful_jubilee",
+      "breakpoints": true
     }
   ]
 }

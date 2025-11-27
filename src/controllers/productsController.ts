@@ -5,13 +5,12 @@ import { eq, and } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { stalls, reviews, vendors } from "../db/schema"
 
-
 export async function getProducts(req: Request, res: Response) {
     try {
-        const { stall_id } = req.query;
+        const { stall_id, category } = req.query;
         const productImages = alias(images, 'product_images');
 
-        let query = db
+        const products = await db
             .select({
                 product_id: stall_items.item_id,
                 product_name: stall_items.item_name,
@@ -21,22 +20,24 @@ export async function getProducts(req: Request, res: Response) {
                 in_stock: stall_items.in_stock,
                 stall_id: stall_items.stall_id,
                 product_image: productImages.image_url,
+                category: stall_items.category,
+                stall_name: stalls.stall_name,
             })
             .from(stall_items)
+            .leftJoin(stalls, eq(stall_items.stall_id, stalls.stall_id))
             .leftJoin(
                 productImages,
                 and(
                     eq(stall_items.item_id, productImages.item_id),
-                    eq(productImages.image_type, 'thumbnail') // Assuming 'thumbnail' for product images
+                    eq(productImages.image_type, 'thumbnail')
+                )
+            )
+            .where(
+                and(
+                    stall_id ? eq(stall_items.stall_id, Number(stall_id)) : undefined,
+                    category ? eq(stall_items.category, String(category)) : undefined
                 )
             );
-
-        if (stall_id) {
-            // @ts-ignore
-            query = query.where(eq(stall_items.stall_id, stall_id));
-        }
-
-        const products = await query;
 
         res.status(200).json(products);
     } catch (err) {
@@ -44,6 +45,9 @@ export async function getProducts(req: Request, res: Response) {
         res.status(500).json({ error: 'Internal server error' });
     }
 }
+
+
+
       export async function createListing(req: Request, res: Response) {
   try {
     console.log("=== CREATE LISTING START ===");
@@ -77,9 +81,9 @@ export async function getProducts(req: Request, res: Response) {
     }
 
     // Validation
-    if (!stall_id || !item_name || !price) {
+    if (!stall_id || !item_name || !price || !category) {
       return res.status(400).json({ 
-        error: "stall_id, item_name, and price are required." 
+        error: "stall_id, item_name, price, and category are required." 
       });
     }
 
@@ -97,15 +101,16 @@ export async function getProducts(req: Request, res: Response) {
         price: priceDecimal,
         item_stocks: stocks,
         in_stock: stocks > 0,
+        category: category, // NEW: Include category
       })
       .returning({ item_id: stall_items.item_id });
 
     const itemId = inserted[0]!.item_id;
     console.log("✅ Product created with ID:", itemId);
 
-    // ✅ Handle product image upload
+    // Handle product image upload
     const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-    const productImage = files?.product_image?.[0] || req.file; // Check both locations
+    const productImage = files?.product_image?.[0] || req.file;
 
     console.log("📸 Image upload details:", {
       files: files,
@@ -140,6 +145,7 @@ export async function getProducts(req: Request, res: Response) {
         price: priceDecimal,
         item_stocks: stocks,
         in_stock: stocks > 0,
+        category: category, // NEW: Include category in response
         has_image: !!productImage
       },
     });

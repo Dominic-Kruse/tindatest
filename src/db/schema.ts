@@ -123,8 +123,7 @@ export const stalls = pgTable('stalls', {
 /**
  * Stall items (products)
  * - indexed on stall_id and price for common listing/filtering
- */
-export const stall_items = pgTable(
+ */export const stall_items = pgTable(
   'stall_items',
   {
     item_id: serial('item_id').primaryKey(),
@@ -134,12 +133,14 @@ export const stall_items = pgTable(
     price: decimal('price', { precision: 12, scale: 2 }).notNull(),
     item_stocks: integer('item_stocks').default(0),
     in_stock: boolean('in_stock').default(false),
+    category: varchar('category', { length: 100 }).notNull().default('Other'), // NEW: Added category field
     created_at: timestamp('created_at').defaultNow().notNull(),
     updated_at: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => ({
     stallIdIndex: index('stall_items_stall_id_idx').on(table.stall_id),
     priceIndex: index('stall_items_price_idx').on(table.price),
+    categoryIndex: index('stall_items_category_idx').on(table.category), // NEW: Index for category filtering
   })
 );
 
