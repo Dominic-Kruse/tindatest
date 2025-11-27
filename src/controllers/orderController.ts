@@ -5,12 +5,17 @@ import { and, eq, desc, asc, inArray, count, gte } from 'drizzle-orm';
 
 export const getVendorOrders = async (req: Request, res: Response) => {
   const { stallId, sortBy, limit = '10', page = '1', category } = req.query;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
 
   const pageNumber = parseInt(page as string, 10);
   const limitNumber = parseInt(limit as string, 10);
   const offset = (pageNumber - 1) * limitNumber;
 
-  const whereClauses = [];
+  const whereClauses = [eq(stalls.user_id, userId)];
 
   if (stallId) {
     whereClauses.push(eq(orders.stall_id, Number(stallId)));
@@ -64,17 +69,24 @@ export const getVendorOrders = async (req: Request, res: Response) => {
 
 export const getVendorOrderStats = async (req: Request, res: Response) => {
   const { stallId } = req.query;
+  const userId = req.user?.id;
 
-  if (!stallId) {
-    return res.status(400).json({ message: 'Stall ID is required' });
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
   }
 
   try {
-    // Calculate total orders for the stall
+    const whereClauses = [eq(stalls.user_id, userId)];
+    if (stallId) {
+      whereClauses.push(eq(orders.stall_id, Number(stallId)));
+    }
+
+    // Calculate total orders for the stall(s)
     const totalOrdersResult = await db
       .select({ count: count() })
       .from(orders)
-      .where(eq(orders.stall_id, Number(stallId)));
+      .leftJoin(stalls, eq(orders.stall_id, stalls.stall_id))
+      .where(and(...whereClauses));
 
     const totalOrders = totalOrdersResult[0]?.count ? Number(totalOrdersResult[0].count) : 0;
 
@@ -88,8 +100,9 @@ export const getVendorOrderStats = async (req: Request, res: Response) => {
     const weeklyOrdersResult = await db
       .select({ count: count() })
       .from(orders)
+      .leftJoin(stalls, eq(orders.stall_id, stalls.stall_id))
       .where(and(
-        eq(orders.stall_id, Number(stallId)),
+        ...whereClauses,
         gte(orders.created_at, startOfWeek)
       ));
 
