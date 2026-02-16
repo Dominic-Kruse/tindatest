@@ -31,7 +31,7 @@ export function verifyToken(req: Request, res: Response, next: NextFunction) {
   }
 
   const token = authHeader.split(' ')[1];
-  console.log("Token extracted, length:", token?.length);
+  // console.log("Token extracted, length:", token?.length);
 
   if (!token) {
     console.log("❌ NO TOKEN EXTRACTED");
@@ -39,14 +39,14 @@ export function verifyToken(req: Request, res: Response, next: NextFunction) {
   }
 
   try {
-    console.log("🔑 Verifying token...");
+    // console.log("🔑 Verifying token...");
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtUser;
-    console.log("✅ TOKEN VERIFIED SUCCESSFULLY");
-    console.log("Decoded user:", decoded);
+    // console.log("✅ TOKEN VERIFIED SUCCESSFULLY");
+    // console.log("Decoded user:", decoded);
     
     // ✅ This should now work with the extended Request type
     req.user = decoded;
-    console.log("=== 🔐 AUTH MIDDLEWARE END ===");
+    // console.log("=== 🔐 AUTH MIDDLEWARE END ===");
     next();
   } catch (err: any) {
     console.error("❌ TOKEN VERIFICATION FAILED:", err.message);
