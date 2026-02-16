@@ -12,7 +12,7 @@ import orderRoutes from './routes/orderRoutes'
 import searchRouter from "./routes/searchRoutes";
 import checkoutRoutes from './routes/checkoutRoutes'
 
-const app = express()
+export const app = express()
 const port = process.env.PORT || 3001
 
 app.use(cors())
@@ -61,5 +61,6 @@ app.get('/api/debug/routes', (req, res) => {
   res.json(routes)
 })
 
-// Vercel-compatible export (REMOVE app.listen)
+
+
 export default app
