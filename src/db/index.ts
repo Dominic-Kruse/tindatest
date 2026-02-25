@@ -12,8 +12,12 @@ if (process.env.NODE_ENV !== 'production') {
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is not set');
 }
+
+// Use SSL for cloud databases (Neon, etc.) but not for localhost/CI test databases
+const isLocalDatabase = process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1');
+
 const client = postgres(process.env.DATABASE_URL, {
-  ssl: 'require',  // crucial for Neon connection
+  ssl: isLocalDatabase ? false : 'require',
 });
 
 export const db = drizzle(client, { schema });
