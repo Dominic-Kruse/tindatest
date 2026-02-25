@@ -6,9 +6,6 @@ import { users, stalls, vendors, stall_items} from "../src/db/schema.ts";
 import jwt from 'jsonwebtoken'
 // import { Request, Response } from "express"
 
-
-
-
 describe("POST /api/products", () => {
     beforeEach(async () =>{ 
         
@@ -33,8 +30,6 @@ describe("POST /api/products", () => {
             category: "walaa category",
             status: "active",
         })      
-       
-      
     });
    
     it('It creates a product for a vendor', async () => {
@@ -87,7 +82,6 @@ describe("POST /api/products", () => {
 describe("GET /api/products", () => {
     beforeEach(async () => {
         await clearDatabase()
-
         await db.insert(users).values({
             user_id: 1, 
             email: "vendortest@gmail.com",
@@ -95,11 +89,9 @@ describe("GET /api/products", () => {
             password_hash: "hashed",
             role: "vendor"
         })
-
         await db.insert(vendors).values({
             user_id: 1
         })
-
         await db.insert(stalls).values({
             stall_id: 1,
             user_id: 1,
@@ -107,7 +99,6 @@ describe("GET /api/products", () => {
             category: "walaa category",
             status: "active",
         })
-        
         const payload = {id: 1, email: "vendortest@gmail.com", role: "vendor"}
         const secret = process.env.JWT_SECRET || "testsecret"
         const token = jwt.sign(payload, secret, {expiresIn: "1h"})
@@ -119,7 +110,6 @@ describe("GET /api/products", () => {
         .field("item_name", "test product")
         .field("price", "100")
         .field("category", "food")
-
     }) 
 
     it("should retrieve items from stall with the id: 1", async () => {
