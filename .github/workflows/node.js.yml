@@ -43,7 +43,7 @@ jobs:
           DATABASE_URL: postgres://testuser:testpassword@localhost:5432/testdb
           JWT_SECRET: testsecret
           PORT: 3001
-        run: npm run migrate up
+        run: npm run drizzle:migrate
 
       - name: Run Tests
         env:
