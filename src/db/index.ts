@@ -5,10 +5,13 @@ import * as schema from './schema';
 
 dotenv.config();
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL is not set in .env file');
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
 }
 
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set');
+}
 const client = postgres(process.env.DATABASE_URL, {
   ssl: 'require',  // crucial for Neon connection
 });

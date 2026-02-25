@@ -47,6 +47,7 @@ jobs:
 
       - name: Run Tests
         env:
+          NODE_ENV: test
           DATABASE_URL: postgres://testuser:testpassword@localhost:5432/testdb
           JWT_SECRET: testsecret
           JWT_EXPIRES_IN: 7d
