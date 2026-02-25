@@ -6,6 +6,7 @@ describe("POST /api/users/register", () => {
   beforeEach(async () => {
     await clearDatabase();
   });
+  
 //happy paths
   it("registers a new user", async () => {
     const res = await request(app)
@@ -74,6 +75,6 @@ describe("POST /api/users/register", () => {
         role: "buyer",
       });
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(400); 
   });
 });
